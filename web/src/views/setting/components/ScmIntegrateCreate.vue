@@ -43,6 +43,11 @@
           <el-input v-model.trim="form.config.user" auto-complete="off" placeholder="请输入gitlab用户名"></el-input>
         </el-form-item>
       </div>
+      <div v-if="repoType === '0' && form.type ==='coding'">
+        <el-form-item label="用户名" prop="config.user" class="form-item">
+          <el-input v-model.trim="form.config.user" auto-complete="off" placeholder="请输入coding用户名"></el-input>
+        </el-form-item>
+      </div>
       <div v-if="repoType === '0'">
         <el-form-item label="Token" prop="config.token" class="form-item">
           <el-input v-model.trim="form.config.token" auto-complete="off" maxlength="120" placeholder="请输入代码源Token"></el-input>
@@ -91,6 +96,7 @@ export default {
         {"name": "gitee"},
         {"name": "gitea"},
         {"name": "gogs"},
+        {"name": "coding"},
       ],
       direction: 'rtl',
       // 是否属于编辑状态

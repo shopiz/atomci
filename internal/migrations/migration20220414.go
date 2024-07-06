@@ -158,7 +158,7 @@ func (m Migration20220414) migrateRepoServerIntoIntegrateSetting(items []repoSer
 
 func (m Migration20220414) generateRepoConf(repoItem repoServer) (item interface{}) {
 	switch strings.ToLower(repoItem.Type) {
-	case "gitlab":
+	case "gitlab", "coding":
 		item = settings.ScmAuthConf{
 			User: repoItem.User,
 			ScmBaseConfig: settings.ScmBaseConfig{

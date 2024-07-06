@@ -141,7 +141,7 @@ func (config *Config) Struct(sc string, settingType string) (interface{}, error)
 		scmConf := &ScmAuthConf{}
 		err := json.Unmarshal([]byte(sc), scmConf)
 		return scmConf, err
-	case "gitea", "gitee", "github":
+	case "gitea", "gitee", "github", "coding":
 		scmConf := &ScmAuthConf{}
 		scmConf.User = "oauth2"
 		err := json.Unmarshal([]byte(sc), scmConf)

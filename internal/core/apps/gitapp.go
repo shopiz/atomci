@@ -65,6 +65,8 @@ func NewScmProvider(vcsType, vcsPath, token string) (*scm.Client, error) {
 		} else {
 			client, err = gogs.New(schema + "://" + projectPathSplit[0])
 		}
+	case "coding":
+		client = github.NewDefault()
 	case "github":
 		client = github.NewDefault()
 	case "gitee":
@@ -84,7 +86,7 @@ func getSCMHttpClient(scmType string, token string) *http.Client {
 		return &http.Client{}
 	}
 	switch strings.ToLower(scmType) {
-	case "gitlab", "gogs":
+	case "gitlab", "gogs", "coding":
 		return &http.Client{
 			Transport: &transport.PrivateToken{
 				Token: token,

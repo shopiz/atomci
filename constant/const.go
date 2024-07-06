@@ -62,13 +62,14 @@ const (
 	SCMGitea            = "gitea"
 	SCMGitee            = "gitee"
 	SCMGogs             = "gogs"
+	SCMCoding           = "coding"
 	IntegrateKubernetes = "kubernetes"
 	IntegrateJenkins    = "jenkins"
 	IntegrateRegistry   = "registry"
 )
 
 var Integratetypes = []string{IntegrateKubernetes, IntegrateJenkins, IntegrateRegistry}
-var ScmIntegratetypes = []string{SCMGitlab, SCMGithub, SCMGitea, SCMGitee, SCMGogs}
+var ScmIntegratetypes = []string{SCMGitlab, SCMGithub, SCMGitea, SCMGitee, SCMGogs, SCMCoding}
 
 const (
 	DefaultContainerName    = "jnlp"
