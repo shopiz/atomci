@@ -40,7 +40,7 @@ import (
 )
 
 // NewScmProvider ..
-func NewScmProvider(vcsType, vcsPath, token string) (*scm.Client, error) {
+func NewScmProvider(vcsType, vcsPath, userName string, token string) (*scm.Client, error) {
 	var err error
 	var client *scm.Client
 	switch strings.ToLower(vcsType) {
@@ -75,18 +75,18 @@ func NewScmProvider(vcsType, vcsPath, token string) (*scm.Client, error) {
 		err = fmt.Errorf("source code management system not configured")
 	}
 	if client != nil {
-		client.Client = getSCMHttpClient(vcsType, token)
+		client.Client = getSCMHttpClient(vcsType, userName, token)
 	}
 	return client, err
 }
 
 // 根据不同类型获取客户端，若有token，则配置对应token；无token,表示公共库，不配置鉴权信息
-func getSCMHttpClient(scmType string, token string) *http.Client {
+func getSCMHttpClient(scmType string, userName string, token string) *http.Client {
 	if token == "" {
 		return &http.Client{}
 	}
 	switch strings.ToLower(scmType) {
-	case "gitlab", "gogs", "coding":
+	case "gitlab", "gogs":
 		return &http.Client{
 			Transport: &transport.PrivateToken{
 				Token: token,
@@ -97,6 +97,12 @@ func getSCMHttpClient(scmType string, token string) *http.Client {
 				Token: token,
 			},
 		}
+	case "coding":
+                return &http.Client{
+                        Transport: &transport.PrivateToken{
+				Username: userName,
+                                Password: token,
+                        }}
 	default:
 		return nil
 	}

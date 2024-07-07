@@ -100,8 +100,8 @@ func (manager *AppManager) GetScmProjectsByRepoID(repoID int64) (interface{}, er
 }
 
 // 验证仓库源是否能正常连通，若无token，只要地址能通就行；若有token，则必须认证通过
-func (manager *AppManager) VerifyRepoConnetion(scmType string, url string, token string) error {
-	scmClient, err := NewScmProvider(scmType, url, token)
+func (manager *AppManager) VerifyRepoConnetion(scmType string, url string, userName string, token string) error {
+	scmClient, err := NewScmProvider(scmType, url, userName, token)
 	if err != nil {
 		return err
 	}

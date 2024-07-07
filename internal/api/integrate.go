@@ -134,10 +134,14 @@ func (p *IntegrateController) VerifyRepoConnetion() {
 	request := settings.IntegrateSettingReq{}
 	p.DecodeJSONReq(&request)
 	url := ""
+	userName := ""
 	token := ""
 	if m, ok := request.Config.(map[string]interface{}); ok {
 		if v, has := m["url"]; has {
 			url = fmt.Sprintf("%s", v)
+		}
+		if v, has := m["user"]; has {
+			userName = fmt.Sprintf("%s", v)
 		}
 		if v, has := m["token"]; has {
 			token = fmt.Sprintf("%s", v)
@@ -145,7 +149,7 @@ func (p *IntegrateController) VerifyRepoConnetion() {
 	}
 
 	app := apps.NewAppManager()
-	err := app.VerifyRepoConnetion(request.Type, url, token)
+	err := app.VerifyRepoConnetion(request.Type, url, userName, token)
 	if err != nil {
 		p.HandleInternalServerError(err.Error())
 		log.Log.Error("verify repo connetion occur error: %s", err.Error())
