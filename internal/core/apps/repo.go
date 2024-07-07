@@ -61,7 +61,7 @@ func (manager *AppManager) GetScmProjectsByRepoID(repoID int64) (interface{}, er
 	if scmIntegrateResp.ScmAuthConf.Token == "" {
 		return []*RepoProjectRsp{}, nil
 	}
-	scmClient, err := NewScmProvider(scmIntegrateResp.Type, scmIntegrateResp.ScmAuthConf.URL, scmIntegrateResp.ScmAuthConf.Token)
+	scmClient, err := NewScmProvider(scmIntegrateResp.Type, scmIntegrateResp.ScmAuthConf.URL, scmIntegrateResp.ScmAuthConf.User, scmIntegrateResp.ScmAuthConf.Token)
 	if err != nil {
 		log.Log.Error("init scm Client occur error: %v", err.Error())
 		return nil, fmt.Errorf("网络错误，请重试")
@@ -135,8 +135,9 @@ func (manager *AppManager) VerifyAppConnetion(repoID int64, url string, repo str
 	if err != nil {
 		return err
 	}
+	userName := scmIntegrateResp.ScmAuthConf.User
 	token := scmIntegrateResp.ScmAuthConf.Token
-	scmClient, err := NewScmProvider(scmIntegrateResp.Type, url, token)
+	scmClient, err := NewScmProvider(scmIntegrateResp.Type, url, userName, token)
 	if err != nil {
 		return err
 	}
