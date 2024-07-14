@@ -42,6 +42,11 @@
         <el-form-item label="用户名" prop="config.user" class="form-item">
           <el-input v-model.trim="form.config.user" auto-complete="off" placeholder="请输入gitlab用户名"></el-input>
         </el-form-item>
+      </div>{{form.type}}
+      <div v-if="repoType === '0' && form.type ==='gitee'">
+        <el-form-item label="用户名" prop="config.user" class="form-item">
+          <el-input v-model.trim="form.config.user" auto-complete="off" placeholder="请输入gitee用户名"></el-input>
+        </el-form-item>
       </div>
       <div v-if="repoType === '0' && form.type ==='coding'">
         <el-form-item label="用户名" prop="config.user" class="form-item">
