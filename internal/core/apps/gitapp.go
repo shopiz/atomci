@@ -66,7 +66,7 @@ func NewScmProvider(vcsType, vcsPath, userName string, token string) (*scm.Clien
 			client, err = gogs.New(schema + "://" + projectPathSplit[0])
 		}
 	case "coding":
-		client = github.NewDefault()
+		client = gitee.NewDefault()
 	case "github":
 		client = github.NewDefault()
 	case "gitee":
@@ -91,18 +91,18 @@ func getSCMHttpClient(scmType string, userName string, token string) *http.Clien
 			Transport: &transport.PrivateToken{
 				Token: token,
 			}}
-	case "gitea", "gitee", "github":
+	case "gitea", "gitee", "github", "coding":
 		return &http.Client{
 			Transport: &transport.BearerToken{
 				Token: token,
 			},
 		}
-	case "coding":
-                return &http.Client{
-                        Transport: &transport.PrivateToken{
-				Username: userName,
-                                Password: token,
-                        }}
+	//case "coding":
+	//	return &http.Client{
+	//		Transport: &transport.BasicAuth{
+	//			Username: userName,
+	//			Password: token,
+	//		}}
 	default:
 		return nil
 	}
@@ -119,6 +119,7 @@ func (manager *AppManager) SyncAppBranches(appID int64) error {
 		log.Log.Error("getCompileEnvByID occur error: %v", err.Error())
 		return fmt.Errorf("网络错误，请重试")
 	}
+	log.Log.Debug("SyncAppBranches -> scmIntegrateResp = %v, User = %s, Password = %s", scmIntegrateResp, scmIntegrateResp.User, scmIntegrateResp.Token)
 	client, err := NewScmProvider(scmIntegrateResp.Type, scmApp.Path, scmIntegrateResp.User, scmIntegrateResp.Token)
 	branchList := []*scm.Reference{}
 	listOptions := scm.ListOptions{

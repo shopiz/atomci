@@ -27,6 +27,7 @@
             </el-form-item>
           </el-col>
         </el-row>
+
         <el-row>
           <el-col :span="18">
             <el-form-item :label="$t('bm.deployCenter.pipelineDesc')" prop="name">
@@ -34,6 +35,7 @@
             </el-form-item>
           </el-col>
         </el-row>
+
         <el-row>
           <el-col :span="18">
             <el-form-item label="绑定流程" prop="pipe">
@@ -49,14 +51,22 @@
       <el-table-column type="selection" min-width="7%" :show-overflow-tooltip="true"></el-table-column>
       <el-table-column prop="name" :label="$t('bm.deployCenter.name')" sortable min-width="12%" :show-overflow-tooltip="true" />
       <el-table-column prop="language" :label="$t('bm.deployCenter.language')" sortable min-width="8%" :show-overflow-tooltip="true" />
-      <el-table-column prop="build_path" label="构建目录" sortable min-width="10%" :show-overflow-tooltip="true" />
-
+      <el-table-column prop="build_path" label="构建目录" sortable min-width="10%" :show-overflow-tooltip="true">
+        <template slot-scope="scope">
+          <el-input v-model="scope.row.build_path" :placeholder="$t('bm.add.buildPathCom')"> </el-input>
+        </template>
+      </el-table-column>
       <el-table-column :label="$t('bm.deployCenter.releaseBran')" min-width="15%">
         <template slot-scope="scope">
           <el-select v-model.trim="scope.row.branch_name" filterable :placeholder="$t('bm.add.selectSubmitBra')">
             <el-option v-for="(item, index) in scope.row.branch_history_list" :key="index" :label="item" :value="item">
             </el-option>
           </el-select>
+        </template>
+      </el-table-column>
+      <el-table-column prop="version" label="版本号" sortable min-width="10%" :show-overflow-tooltip="true">
+        <template slot-scope="scope">
+          <el-input v-model="scope.row.version" :placeholder="$t('bm.add.versionCom')"> </el-input>
         </template>
       </el-table-column>
       <el-table-column :label="$t('bm.add.customBuild')" sortable min-width="40%">
@@ -162,11 +172,14 @@
             for(const i in this.selectList) {
               const st = {
                 'app_id': this.selectList[i].id,
+                'build_path': this.selectList[i].build_path || '/',
                 'branch_name': this.selectList[i].branch_name,
                 'compile_command': this.selectList[i].compile_command,
+                'version': this.selectList[i].version || 'v1.0.0',
               };
               apps.push(st);
             }
+            console.log('=====>', apps, this.selectList)
             const params = {
               version_no: this.form.image_version,
               name: this.form.name,
@@ -210,7 +223,7 @@
           if (data) {
             this.pipeArray = data;
             this.form.pipe = this.pipeArray[0].id;
-          }          
+          }
         });
         this.form = Object.assign({}, formData);
         backend.getProjectApp(this.projectID, (data) => {
@@ -220,7 +233,7 @@
             for (const i of this.tableList) {
               this.toggleSelection([i]);
             }
-            this.selectList = Object.assign({},data);
+            this.selectList = Object.assign({}, data);
           });
         });
 

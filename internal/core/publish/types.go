@@ -25,6 +25,7 @@ import (
 type PubllishReqApp struct {
 	AppID          int64  `json:"app_id"`
 	BranchName     string `json:"branch_name"`
+	Version        string `json:"version"`
 	CompileCommand string `json:"compile_command"`
 }
 
@@ -37,6 +38,8 @@ type PublishAddApps struct {
 type PublishReq struct {
 	Apps           []*PubllishReqApp `json:"apps"`
 	Name           string            `json:"name"`
+	BuildPath      string            `json:"build_path"`
+	Version        string            `json:"version"`
 	BindPipelineID int64             `json:"bind_pipeline_id"`
 	VersionNo      string            `json:"version_no"`
 }
@@ -52,6 +55,13 @@ type PublishReqFilterQuery struct {
 	query.FilterQuery
 	Status  int64 `json:"status"`
 	Deleted bool  `json:"deleted"`
+}
+
+// PublishAppUpdate ..
+type PublishAppUpdate struct {
+	VersionNo string `json:"version_no"`
+	Name      string `json:"name"`
+	Version   string `json:"version"`
 }
 
 // PublishInfoApp ..

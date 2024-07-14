@@ -37,6 +37,7 @@ type ManualStepReq struct {
 // RunBuildAppReq .
 type RunBuildAppReq struct {
 	Branch         string `json:"branch_name"`
+	Version        string `json:"version"`
 	CompileCommand string `json:"compile_command"`
 	ProjectAppID   int64  `json:"project_app_id"`
 }
@@ -61,8 +62,11 @@ type BuildStepCallbackReq struct {
 
 // RunDeployAppReq .
 type RunDeployAppReq struct {
-	ProjectAppID int64 `json:"project_app_id"`
-	Gray         bool  `json:"gray"`
+	ProjectAppID int64  `json:"project_app_id"`
+	BuildPath    string `json:"build_path"`
+	Version      string `json:"version"`
+	BranchName   string `json:"branch_name"`
+	Gray         bool   `json:"gray"`
 }
 
 // DeployStepReq ..
@@ -210,6 +214,7 @@ type PublishStepResp struct {
 	Language          string   `json:"language,omitempty"`
 	BranchName        string   `json:"branch_name,omitempty"`
 	BuildPath         string   `json:"build_path,omitempty"`
+	Version           string   `json:"version,omitempty"`
 	CompileCommand    string   `json:"compile_command,omitempty"`
 	BranchHistoryList []string `json:"branch_history_list,omitempty"`
 }
@@ -273,6 +278,7 @@ type AppParamsForCreatePublishJob struct {
 	ProjectAppID int64  `json:"project_app_id"`
 	Branch       string `json:"branch"`
 	Path         string `json:"path"`
+	Version      string `json:"version"`
 	ImageVersion string `json:"image_version"`
 	Gray         bool   `json:"gray"`
 	ImageAddr    string `json:"image_addr"`

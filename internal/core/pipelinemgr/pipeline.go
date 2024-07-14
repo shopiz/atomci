@@ -17,6 +17,7 @@ limitations under the License.
 package pipelinemgr
 
 import (
+	"encoding/json"
 	"fmt"
 	"strings"
 
@@ -101,7 +102,8 @@ func (pm *PipelineManager) RunBuildStep(projectID, publishID, stageID int64, cre
 		return models.Failed, 0, "", fmt.Errorf("can not get env stage based on lastpipelineinstance id: %v", publish.LastPipelineInstanceID)
 	}
 
-	log.Log.Debug("run build step params: %+v", params)
+	logParams, _ := json.Marshal(params)
+	log.Log.Debug("run build step params: %s", logParams)
 	switch params.ActionName {
 	case "trigger":
 		if len(params.Apps) == 0 {

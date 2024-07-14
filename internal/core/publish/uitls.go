@@ -151,6 +151,7 @@ func (pm *PublishManager) createPublishApps(publishApps []*PubllishReqApp, publi
 		publishAppModel := models.PublishApp{
 			Addons:         models.NewAddons(),
 			BranchName:     app.BranchName,
+			Version:        app.Version,
 			CompileCommand: app.CompileCommand,
 			ProjectAppID:   projectApp.ID,
 			PublishID:      publishID,
@@ -292,7 +293,6 @@ func (pm *PublishManager) updatePublishOrderStatus(publish *models.Publish, last
 	return nil
 }
 
-//
 func (pm *PublishManager) createPublishOperationLogItem(co *CreateOperationLogReq) error {
 	operationLog := &models.PublishOperationLog{
 		Creator:            co.Creator,
@@ -330,7 +330,7 @@ func (pm *PublishManager) publishCreateParamVerify(req *PublishReq) error {
 		if app.BranchName == "" {
 			errs = []string{"请确认分支选择"}
 		}
-		_, err := pm.pipelineHandler.GetAppCodeCommitByBranch(app.AppID, app.BranchName)
+		_, err := pm.pipelineHandler.GetAppCodeCommitByBranch(app.AppID, app.BranchName, app.Version)
 		if err != nil {
 			errs = append(errs, err.Error())
 		}

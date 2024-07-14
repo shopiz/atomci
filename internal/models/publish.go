@@ -103,6 +103,8 @@ type PublishApp struct {
 	Addons
 	PublishID      int64  `orm:"column(publish_id)" json:"publish_id"`
 	ProjectAppID   int64  `orm:"column(project_app_id)" json:"project_app_id"`
+	BuildPath      string `orm:"column(build_path)" json:"build_path"`
+	Version        string `orm:"column(version);size(64)" json:"version"`
 	BranchName     string `orm:"column(branch_name);size(64)" json:"branch_name"`
 	CompileCommand string `orm:"column(compile_command);size(1024)" json:"compile_command"`
 }

@@ -67,15 +67,20 @@
       <el-table-column prop="build_path" label="构建目录" sortable min-width="10%" :show-overflow-tooltip="true" />
       <el-table-column :label="$t('bm.deployCenter.releaseBran')" min-width="15%">
         <template slot-scope="scope">
-          <el-select v-model.trim="scope.row.branch_name" filterable :placeholder="$t('bm.add.selectSubmitBra')" disabled>
+          <el-select v-model.trim="scope.row.branch_name" filterable :placeholder="$t('bm.add.selectSubmitBra')">
             <el-option v-for="(item, index) in scope.row.branch_history_list" :key="index" :label="item" :value="item">
             </el-option>
           </el-select>
         </template>
       </el-table-column>
+      <el-table-column :label="$t('bm.add.version')" sortable min-width="40%">
+        <template slot-scope="scope">
+          <el-input v-model="scope.row.version" :placeholder="$t('bm.add.versionCom')"> </el-input>
+        </template>
+      </el-table-column>
       <el-table-column :label="$t('bm.add.customBuild')" sortable min-width="40%">
         <template slot-scope="scope">
-          <el-input v-model="scope.row.compile_command" :placeholder="$t('bm.add.customBuildCom')"> </el-input>
+          <el-input v-model="scope.row.compile_command" :placeholder="$t('bm.add.customBuild')"> </el-input>
         </template>
       </el-table-column>
     </el-table>
@@ -167,6 +172,7 @@
         for (const a of this.selectList) {
           const ats = {
             branch_name: a.branch_name,
+            version: a.version,
             project_app_id: a.project_app_id,
             compile_command: a.compile_command,
           };
@@ -207,7 +213,7 @@
         backend.getBuildMerge(this.projectID, publishid, envStageID, (data) => {
           this.subloading = false;
           this.tableList = data.apps.map((i, index) => {
-            // 
+            //
             i.branch_history_list = i.branch_history_list
             i.name = i.app_name;
             return i;

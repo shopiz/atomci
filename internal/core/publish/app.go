@@ -76,6 +76,19 @@ func (pm *PublishManager) AddPublishApps(publishID int64, req *PublishAddApps) e
 	return pm.createPublishApps(apps, publishID)
 }
 
+// UpdatePublishApp ..
+func (pm *PublishManager) UpdatePublishApp(publishAppID int64, req *PublishAppUpdate) error {
+	app, err := pm.model.GetPublishApp(publishAppID)
+	if err != nil {
+		log.Log.Error("when DeletePublishApp, get publish app occur error: %s", err.Error())
+		return err
+	}
+
+	app.Version = req.Version
+
+	return pm.model.UpdatePublishApp(app)
+}
+
 // DeletePublishApp ..
 func (pm *PublishManager) DeletePublishApp(publishAppID int64) error {
 	app, err := pm.model.GetPublishApp(publishAppID)

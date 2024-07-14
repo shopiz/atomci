@@ -19,7 +19,9 @@ package pipelinemgr
 import (
 	"context"
 	"encoding/base64"
+	"encoding/json"
 	"fmt"
+	"github.com/go-atomci/atomci/utils/version"
 	"strconv"
 	"strings"
 
@@ -140,6 +142,8 @@ func (pm *PipelineManager) generateCompileEnvParams(apps []*RunBuildAppReq) []co
 			WorkingDir: "/home/jenkins/agent",
 			Name:       strings.ToLower(scmApp.Name),
 		}
+		logArgs, _ := json.Marshal(compileEnvItem.Args)
+		log.Log.Debug("compileEnvItem, name: %s, workingDir: %s, image: %s, args: %+v, command: %s", compileEnvItem.Name, compileEnvItem.WorkingDir, compileEnvItem.Image, logArgs, compileEnvItem.Command)
 		compileParams = append(compileParams, compileEnvItem)
 	}
 	return compileParams
@@ -255,6 +259,7 @@ func (pm *PipelineManager) CreateBuildJob(creator string, projectID, publishID i
 			ProjectAppID: param.ProjectAppID,
 			Branch:       param.Branch,
 			Path:         param.Path,
+			Version:      param.Version,
 			// TODO: image version get based on image tag rule
 			ImageVersion: "",
 		}
@@ -309,7 +314,7 @@ func (pm *PipelineManager) CreateBuildJob(creator string, projectID, publishID i
 			}
 		case constant.StepSubTaskCompile:
 			for _, compileItem := range subTask.Params {
-				log.Log.Debug("sub task image: %v", compileItem.Name)
+				log.Log.Debug("sub task image: %v, command: %v, args: %v", compileItem.Name, compileItem.Command, compileItem.Args)
 				compileContainerItem := jenkins.ContainerEnv{
 					Name:       compileItem.Name,
 					Image:      compileItem.Image,
@@ -349,6 +354,7 @@ func (pm *PipelineManager) CreateBuildJob(creator string, projectID, publishID i
 	}
 
 	pipelineStagesStr := strings.Join(taskPipelineXMLStrArr, " ")
+	log.Log.Debug("PipelineStages = %v", pipelineStagesStr)
 
 	if len(apps) == 0 {
 		log.Log.Error("project app len is 0, invalidate")
@@ -378,6 +384,7 @@ func (pm *PipelineManager) CreateBuildJob(creator string, projectID, publishID i
 		baseURL = strings.Replace(baseURL, "/", "", -1)
 	}
 	repoConfStr := fmt.Sprintf("{\"%s\":[\"%s\",\"%s\"]}", baseURL, scmIntegrateResp.User, scmIntegrateResp.Token)
+	log.Log.Debug("RepoConf = %v", repoConfStr)
 
 	adminToken, err := pm.getUserToken("admin")
 	if err != nil {
@@ -405,6 +412,7 @@ func (pm *PipelineManager) CreateBuildJob(creator string, projectID, publishID i
 
 	callBackURL := fmt.Sprintf("%s/atomci/api/v1/pipelines/%d/publishes/%d/stages/%d/steps/%s/callback", atomciServer, projectID, publishID, envStageJSON.StageID, "build")
 	callBackRequestBody := fmt.Sprintf("{\"publish_job_id\": %d}", publishJobID)
+	log.Log.Debug("CallBackURL = %s", callBackURL)
 
 	// k8sDeployInfo, err := pm.getDeployInfo(stageJSON.StageID)
 	// k8sDeployInfo: []string{harbor.HarborName, harbor.HarborAddr, flowStage.ArrangeEnv, harbor.HarborUser, harbor.HarborPassword}
@@ -443,6 +451,14 @@ func (pm *PipelineManager) CreateBuildJob(creator string, projectID, publishID i
 	if err != nil {
 		return 0, "", err
 	}
+
+	for _, v := range apps {
+		err := pm.modelPublish.UpdatePublishApp(&models.PublishApp{ProjectAppID: projectApp.ID, Version: v.Version})
+		if err != nil {
+			return 0, "", err
+		}
+	}
+
 	return runID, jobName, nil
 }
 
@@ -591,6 +607,7 @@ func (pm *PipelineManager) CreateDeployJob(creator string, projectID, publishID 
 	if err != nil {
 		return 0, "", err
 	}
+
 	return runID, jobName, nil
 }
 func (pm *PipelineManager) renderTemplateStr(apps []*RunDeployAppReq, publishID, envID int64) (string, error) {
@@ -604,13 +621,13 @@ func (pm *PipelineManager) renderTemplateStr(apps []*RunDeployAppReq, publishID,
 
 		// replace template str
 		arrangeConfig := arrange.Config
-		publishApp, err := pm.modelPublish.GetPublishAppByPublishIDAndAppID(publishID, item.ProjectAppID)
+		_, err = pm.modelPublish.GetPublishAppByPublishIDAndAppID(publishID, item.ProjectAppID)
 		if err != nil {
 			logs.Warn("when get publish app by publishid/appid occur error:%s, did not update app arrange image info", err.Error())
 			continue
 		}
 
-		newImageAddr, originImage, err := pm.generateImageAddr(arrange.ID, item.ProjectAppID, publishApp.BranchName)
+		newImageAddr, originImage, err := pm.generateImageAddr(arrange.ID, item.ProjectAppID, item.BranchName, item.Version)
 		if err != nil {
 			continue
 		}
@@ -624,7 +641,7 @@ func (pm *PipelineManager) renderTemplateStr(apps []*RunDeployAppReq, publishID,
 	return templateStr, nil
 }
 
-func (pm *PipelineManager) generateImageAddr(arrangeID, projectAppID int64, branch string) (string, string, error) {
+func (pm *PipelineManager) generateImageAddr(arrangeID, projectAppID int64, branch string, ver string) (string, string, error) {
 	imageMapping, err := pm.modelAppArrange.GetAppImageMappingByArrangeIDAndProjectAppID(arrangeID, projectAppID)
 	if err != nil {
 		log.Log.Error("get imagemapping error: %s", err.Error())
@@ -634,7 +651,7 @@ func (pm *PipelineManager) generateImageAddr(arrangeID, projectAppID int64, bran
 	switch imageMapping.ImageTagType {
 	case models.SystemDefaultTag:
 		// branch get from RunBuildAppReq.Branch
-		imageTag, err := pm.GetAppCodeCommitByBranch(projectAppID, branch)
+		imageTag, err := pm.GetAppCodeCommitByBranch(projectAppID, branch, ver)
 		if err != nil {
 			logs.Error("when get app code commit by branch error: %s, did not update app arrange image info", err.Error())
 			return "", "", err
@@ -677,7 +694,7 @@ func removeImageUrlTag(imageUrl string) (string, error) {
 	return "", nil
 }
 
-func (pm *PipelineManager) GetAppCodeCommitByBranch(appID int64, branchName string) (string, error) {
+func (pm *PipelineManager) GetAppCodeCommitByBranch(appID int64, branchName string, ver string) (string, error) {
 	projectApp, err := pm.modelProject.GetProjectApp(appID)
 	if err != nil {
 		log.Log.Error("when get app code commit, get project ap by id: %v error:%s", appID, err.Error())
@@ -694,7 +711,7 @@ func (pm *PipelineManager) GetAppCodeCommitByBranch(appID int64, branchName stri
 	if err != nil {
 		return "", err
 	}
-	client, err := apps.NewScmProvider(scmIntegrateResp.Type, scmIntegrateResp.URL, scmIntegrateResp.Token)
+	client, err := apps.NewScmProvider(scmIntegrateResp.Type, scmIntegrateResp.URL, scmIntegrateResp.User, scmIntegrateResp.Token)
 	if err != nil {
 		return "", err
 	}
@@ -710,7 +727,12 @@ func (pm *PipelineManager) GetAppCodeCommitByBranch(appID int64, branchName stri
 	}
 
 	if len(got) > 0 {
-		return branchName + "-" + got[0].Sha[0:7], nil
+		imgVersion := ver
+		if strings.TrimSpace(imgVersion) == "" {
+			imgVersion = branchName + "-" + got[0].Sha[0:7]
+		}
+		imgVersion = strings.ReplaceAll(imgVersion, "/", "-")
+		return imgVersion, nil
 	} else {
 		logs.Warn("branch: %v did not include any commit", branchName)
 		return "", fmt.Errorf("应用:%v 分支:%v 未包含任何提交, 请通过“我的应用”-“应用详情”-“同步远程分支”后重新选择", scmApp.Name, branchName)
@@ -743,7 +765,8 @@ func (pm *PipelineManager) getPublishStepPreBranchList(projectID, publishID, sta
 			AppName:           scmApp.Name,
 			Language:          scmApp.Language,
 			ProjectAppID:      app.ProjectAppID,
-			BuildPath:         scmApp.BuildPath,
+			BuildPath:         app.BuildPath,
+			Version:           version.Next(app.Version),
 			Type:              "app",
 			TargetBranch:      targetBranch,
 			CompileCommand:    app.CompileCommand,
@@ -963,6 +986,8 @@ func (pm *PipelineManager) aggregateAppsParamsForBuild(apps []*RunBuildAppReq, s
 			RunBuildAppReq: app,
 			Release:        releaseBranch,
 		}
+		log.Log.Debug("run build params, projectId: %v, appId: %v, CompileCommand: %v, Branch: %v",
+			projectApp.ProjectID, projectApp.ID, app.CompileCommand, app.Branch)
 		allParms = append(allParms, allParm)
 
 	}
@@ -988,13 +1013,13 @@ func (pm *PipelineManager) aggregateAppsParamsForDeploy(publishID, stageID int64
 			continue
 		}
 
-		publishApp, err := pm.modelPublish.GetPublishAppByPublishIDAndAppID(publishID, app.ProjectAppID)
+		_, err = pm.modelPublish.GetPublishAppByPublishIDAndAppID(publishID, app.ProjectAppID)
 		if err != nil {
 			logs.Warn("when get publish app by publishid/appid occur error:%s, did not update app arrange image info", err.Error())
 			continue
 		}
 
-		newImageAddr, _, err := pm.generateImageAddr(arrange.ID, app.ProjectAppID, publishApp.BranchName)
+		newImageAddr, _, err := pm.generateImageAddr(arrange.ID, app.ProjectAppID, app.BranchName, app.Version)
 		if err != nil {
 			continue
 		}
@@ -1118,7 +1143,7 @@ func (pm *PipelineManager) renderAppImageitemsForBuild(projectID, publishID, sta
 			continue
 		}
 
-		imageURL, _, err := pm.generateImageAddr(arrange.ID, app.ProjectAppID, app.Branch)
+		imageURL, _, err := pm.generateImageAddr(arrange.ID, app.ProjectAppID, app.Branch, app.Version)
 		if err != nil {
 			continue
 		}
